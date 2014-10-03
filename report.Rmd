@@ -1,0 +1,56 @@
+```{r, echo=FALSE}
+# use
+# libary(rmarkdown)
+# render("report.Rmd", output_format = "pdf_document", output_file = "week3.pdf", clean = FALSE)
+# to make markdown
+# and http://dillinger.io/ to convert markdown to html
+```
+---
+title: "Family's budget"
+output: pdf_document
+---
+
+This report is for the week from September,22 through September,28
+
+```{r, echo=FALSE}
+library(reshape2);
+library(knitr);
+
+expenses <- read.csv("week5_expenses.csv", colClasses = c("Date", "factor", "numeric", "numeric", "factor", "factor", "character", "factor", "factor", "numeric", "character"))
+
+# Separate by categories
+melted <- melt(expenses, id = c("Category"), c("Amount"))
+summary <- dcast(melted, Category ~ variable, sum)
+
+summary$Monthly <- round(summary$Amount / 7 * 30)
+summary$Amount  <- round(summary$Amount)
+summary <- rbind(summary, data.frame(Category = c("---Total---"), Amount = c(paste0('$',sum(summary$Amount))), Monthly = c(paste0('$', sum(summary$Monthly)))))
+
+# Print expenses' summary
+summary
+```
+
+``` {r, echo=FALSE, results='asis'}
+# Show expenses for every category
+categories <- levels(expenses$Category)
+for (i in 1:length(categories)) {
+    curr_expenses <- expenses[which(expenses$Category == categories[i]), ]
+    message(paste("Expenses in ", categories[i]))
+    # print(categories[i])
+    table <- data.frame(date = curr_expenses$Timestamp, amount = curr_expenses$Amount, merchant = curr_expenses$Merchant, comment = curr_expenses$Comment, receipt = curr_expenses$Receipt)
+    
+    for (e in 1:nrow(table)) {
+        message(paste0("$", table$amount[e]));
+        message(table$date[e]);
+        message(weekdays(table$date[e]));
+        message(paste("Merchant:", table$merchant[e]));
+        message(paste("Comment: ", table$comment[e]));
+        message(paste("Receipt: ", table$receipt[e]));
+        # table$amount[e], " ", table$merchant[e], " ", table$comment[e]));
+        # message(table$date[e]);
+        message("");
+    }
+
+    message("--------------------------");
+}
+```
